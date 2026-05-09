@@ -1,0 +1,1795 @@
+Table "oc_migrations" {
+  "app" varchar(255) [not null]
+  "version" varchar(255) [not null]
+
+  Indexes {
+    (app, version) [pk, type: btree, name: "oc_migrations_pkey"]
+  }
+}
+
+Table "oc_appconfig" {
+  "appid" varchar(32) [not null, default: '']
+  "configkey" varchar(64) [not null, default: '']
+  "configvalue" text
+  "type" int4 [not null, default: 2]
+  "lazy" int2 [not null, default: 0]
+
+  Indexes {
+    (appid, configkey) [pk, type: btree, name: "oc_appconfig_pkey"]
+    lazy [type: btree, name: "ac_lazy_i"]
+  }
+}
+
+Table "oc_storages" {
+  "numeric_id" int8 [pk, not null, increment]
+  "id" varchar(64) [unique, default: `NULL::character varying`]
+  "available" int4 [not null, default: 1]
+  "last_checked" int4
+}
+
+Table "oc_mounts" {
+  "id" int8 [pk, not null, increment]
+  "storage_id" int8 [not null]
+  "root_id" int8 [not null]
+  "user_id" varchar(64) [not null]
+  "mount_point" varchar(4000) [not null]
+  "mount_id" int8
+  "mount_provider_class" varchar(128) [default: `NULL::character varying`]
+  "mount_point_hash" varchar(32) [not null]
+
+  Indexes {
+    (user_id, mount_point_hash, root_id) [type: btree, unique, name: "mounts_user_path_root_index"]
+    (storage_id, user_id) [type: btree, name: "mount_user_storage"]
+    mount_provider_class [type: btree, name: "mounts_class_index"]
+    mount_id [type: btree, name: "mounts_mount_id_index"]
+    root_id [type: btree, name: "mounts_root_index"]
+    storage_id [type: btree, name: "mounts_storage_index"]
+  }
+}
+
+Table "oc_mimetypes" {
+  "id" int8 [pk, not null, increment]
+  "mimetype" varchar(255) [unique, not null, default: '']
+}
+
+Table "oc_filecache" {
+  "fileid" int8 [pk, not null, increment]
+  "storage" int8 [not null, default: 0]
+  "path" varchar(4000) [default: `NULL::character varying`]
+  "path_hash" varchar(32) [not null, default: '']
+  "parent" int8 [not null, default: 0]
+  "name" varchar(250) [default: `NULL::character varying`]
+  "mimetype" int8 [not null, default: 0]
+  "mimepart" int8 [not null, default: 0]
+  "size" int8 [not null, default: 0]
+  "mtime" int8 [not null, default: 0]
+  "storage_mtime" int8 [not null, default: 0]
+  "encrypted" int4 [not null, default: 0]
+  "unencrypted_size" int8 [not null, default: 0]
+  "etag" varchar(40) [default: `NULL::character varying`]
+  "permissions" int4 [default: 0]
+  "checksum" varchar(255) [default: `NULL::character varying`]
+
+  Indexes {
+    (storage, path_hash) [type: btree, unique, name: "fs_storage_path_hash"]
+    mtime [type: btree, name: "fs_mtime"]
+    name [type: btree, name: "fs_name_hash"]
+    parent [type: btree, name: "fs_parent"]
+    (parent, name) [type: btree, name: "fs_parent_name_hash"]
+    size [type: btree, name: "fs_size"]
+    (storage, mimepart) [type: btree, name: "fs_storage_mimepart"]
+    (storage, mimetype) [type: btree, name: "fs_storage_mimetype"]
+    (storage, size, fileid) [type: btree, name: "fs_storage_size"]
+  }
+}
+
+Table "oc_group_user" {
+  "gid" varchar(64) [not null, default: '']
+  "uid" varchar(64) [not null, default: '']
+
+  Indexes {
+    (gid, uid) [pk, type: btree, name: "oc_group_user_pkey"]
+    uid [type: btree, name: "gu_uid_index"]
+  }
+}
+
+Table "oc_group_admin" {
+  "gid" varchar(64) [not null, default: '']
+  "uid" varchar(64) [not null, default: '']
+
+  Indexes {
+    (gid, uid) [pk, type: btree, name: "oc_group_admin_pkey"]
+    uid [type: btree, name: "group_admin_uid"]
+  }
+}
+
+Table "oc_groups" {
+  "gid" varchar(64) [pk, not null, default: '']
+  "displayname" varchar(255) [not null, default: 'name']
+}
+
+Table "oc_preferences" {
+  "userid" varchar(64) [not null, default: '']
+  "appid" varchar(32) [not null, default: '']
+  "configkey" varchar(64) [not null, default: '']
+  "configvalue" text
+  "lazy" int2 [not null, default: 0]
+  "type" int2 [not null, default: 0]
+  "flags" int4 [not null, default: 0]
+  "indexed" varchar(64) [default: '']
+
+  Indexes {
+    (userid, appid, configkey) [pk, type: btree, name: "oc_preferences_pkey"]
+    (appid, configkey, indexed, flags) [type: btree, name: "prefs_app_key_ind_fl_i"]
+    (userid, lazy) [type: btree, name: "prefs_uid_lazy_i"]
+  }
+}
+
+Table "oc_properties" {
+  "id" int8 [pk, not null, increment]
+  "userid" varchar(64) [not null, default: '']
+  "propertypath" varchar(255) [not null, default: '']
+  "propertyname" varchar(255) [not null, default: '']
+  "propertyvalue" text [not null]
+  "valuetype" int2 [default: 1]
+
+  Indexes {
+    (propertyname, propertypath, userid) [type: btree, name: "properties_name_path_user"]
+    (userid, propertypath) [type: btree, name: "properties_path_index"]
+    propertypath [type: btree, name: "properties_pathonly_index"]
+  }
+}
+
+Table "oc_share" {
+  "id" int8 [pk, not null, increment]
+  "share_type" int2 [not null, default: 0]
+  "share_with" varchar(255) [default: `NULL::character varying`]
+  "password" varchar(255) [default: `NULL::character varying`]
+  "uid_owner" varchar(64) [not null, default: '']
+  "uid_initiator" varchar(64) [default: `NULL::character varying`]
+  "parent" int8
+  "item_type" varchar(64) [not null, default: '']
+  "item_source" varchar(255) [default: `NULL::character varying`]
+  "item_target" varchar(255) [default: `NULL::character varying`]
+  "file_source" int8
+  "file_target" varchar(512) [default: `NULL::character varying`]
+  "permissions" int2 [not null, default: 0]
+  "stime" int8 [not null, default: 0]
+  "accepted" int2 [not null, default: 0]
+  "expiration" timestamp [default: `NULL::timestamp without time zone`]
+  "token" varchar(32) [default: `NULL::character varying`]
+  "mail_send" int2 [not null, default: 0]
+  "share_name" varchar(64) [default: `NULL::character varying`]
+  "password_by_talk" bool [default: false]
+  "note" text
+  "hide_download" int2 [default: 0]
+  "label" varchar(255) [default: `NULL::character varying`]
+  "attributes" json
+  "password_expiration_time" timestamp [default: `NULL::timestamp without time zone`]
+  "reminder_sent" bool [default: false]
+
+  Indexes {
+    file_source [type: btree, name: "file_source_index"]
+    uid_initiator [type: btree, name: "initiator_index"]
+    (item_type, share_type) [type: btree, name: "item_share_type_index"]
+    uid_owner [type: btree, name: "owner_index"]
+    parent [type: btree, name: "parent_index"]
+    (share_with, file_target) [type: btree, name: "share_with_file_target_index"]
+    share_with [type: btree, name: "share_with_index"]
+    token [type: btree, name: "token_index"]
+  }
+}
+
+Table "oc_jobs" {
+  "id" int8 [pk, not null]
+  "class" varchar(255) [not null, default: '']
+  "argument" text [not null, default: '']
+  "last_run" int4 [default: 0]
+  "last_checked" int4 [default: 0]
+  "reserved_at" int4 [default: 0]
+  "execution_duration" int4 [default: 0]
+  "argument_hash" varchar(64) [default: `NULL::character varying`]
+  "time_sensitive" int2 [not null, default: 1]
+
+  Indexes {
+    (class, argument_hash) [type: btree, name: "job_argument_hash"]
+    class [type: btree, name: "job_class_index"]
+    (last_checked, reserved_at) [type: btree, name: "job_lastcheck_reserved"]
+    time_sensitive [type: btree, name: "jobs_time_sensitive"]
+  }
+}
+
+Table "oc_users" {
+  "uid" varchar(64) [pk, not null, default: '']
+  "displayname" varchar(64) [default: `NULL::character varying`]
+  "password" varchar(255) [not null, default: '']
+  "uid_lower" varchar(64) [default: '']
+
+  Indexes {
+    uid_lower [type: btree, name: "user_uid_lower"]
+  }
+}
+
+Table "oc_authtoken" {
+  "id" int8 [pk, not null, increment]
+  "uid" varchar(64) [not null, default: '']
+  "login_name" varchar(255) [not null, default: '']
+  "password" text
+  "name" text [not null, default: '']
+  "token" varchar(200) [unique, not null, default: '']
+  "type" int2 [default: 0]
+  "remember" int2 [default: 0]
+  "last_activity" int4 [default: 0]
+  "last_check" int4 [default: 0]
+  "scope" text
+  "expires" int4
+  "private_key" text
+  "public_key" text
+  "version" int2 [not null, default: 1]
+  "password_invalid" bool [default: false]
+  "password_hash" varchar(255) [default: `NULL::character varying`]
+
+  Indexes {
+    last_activity [type: btree, name: "authtoken_last_activity_idx"]
+    uid [type: btree, name: "authtoken_uid_index"]
+  }
+}
+
+Table "oc_bruteforce_attempts" {
+  "id" int8 [pk, not null, increment]
+  "action" varchar(64) [not null, default: '']
+  "occurred" int4 [not null, default: 0]
+  "ip" varchar(255) [not null, default: '']
+  "subnet" varchar(255) [not null, default: '']
+  "metadata" varchar(255) [not null, default: '']
+
+  Indexes {
+    ip [type: btree, name: "bruteforce_attempts_ip"]
+    subnet [type: btree, name: "bruteforce_attempts_subnet"]
+  }
+}
+
+Table "oc_vcategory" {
+  "id" int8 [pk, not null, increment]
+  "uid" varchar(64) [not null, default: '']
+  "type" varchar(64) [not null, default: '']
+  "category" varchar(255) [not null, default: '']
+
+  Indexes {
+    (uid, type, category) [type: btree, unique, name: "unique_category_per_user"]
+    category [type: btree, name: "category_index"]
+    type [type: btree, name: "type_index"]
+    uid [type: btree, name: "uid_index"]
+  }
+}
+
+Table "oc_vcategory_to_object" {
+  "objid" int8 [not null, default: 0]
+  "categoryid" int8 [not null, default: 0]
+  "type" varchar(64) [not null, default: '']
+
+  Indexes {
+    (categoryid, objid, type) [pk, type: btree, name: "oc_vcategory_to_object_pkey"]
+    (objid, type) [type: btree, name: "vcategory_objectd_index"]
+  }
+}
+
+Table "oc_systemtag" {
+  "id" int8 [pk, not null, increment]
+  "name" varchar(64) [not null, default: '']
+  "visibility" int2 [not null, default: 1]
+  "editable" int2 [not null, default: 1]
+  "etag" varchar(32) [default: `NULL::character varying`]
+  "color" varchar(6) [default: `NULL::character varying`]
+
+  Indexes {
+    (name, visibility, editable) [type: btree, unique, name: "tag_ident"]
+  }
+}
+
+Table "oc_systemtag_object_mapping" {
+  "objectid" varchar(64) [not null, default: '']
+  "objecttype" varchar(64) [not null, default: '']
+  "systemtagid" int8 [not null, default: 0]
+
+  Indexes {
+    (objecttype, objectid, systemtagid) [pk, type: btree, name: "oc_systemtag_object_mapping_pkey"]
+    objectid [type: btree, name: "systag_by_objectid"]
+    (systemtagid, objecttype) [type: btree, name: "systag_by_tagid"]
+    objecttype [type: btree, name: "systag_objecttype"]
+  }
+}
+
+Table "oc_systemtag_group" {
+  "systemtagid" int8 [not null, default: 0]
+  "gid" varchar(255) [not null]
+
+  Indexes {
+    (gid, systemtagid) [pk, type: btree, name: "oc_systemtag_group_pkey"]
+  }
+}
+
+Table "oc_file_locks" {
+  "id" int8 [pk, not null, increment]
+  "lock" int4 [not null, default: 0]
+  "key" varchar(64) [unique, not null]
+  "ttl" int4 [not null, default: '-1']
+
+  Indexes {
+    ttl [type: btree, name: "lock_ttl_index"]
+  }
+}
+
+Table "oc_comments" {
+  "id" int8 [pk, not null, increment]
+  "parent_id" int8 [not null, default: 0]
+  "topmost_parent_id" int8 [not null, default: 0]
+  "children_count" int4 [not null, default: 0]
+  "actor_type" varchar(64) [not null, default: '']
+  "actor_id" varchar(64) [not null, default: '']
+  "message" text
+  "verb" varchar(64) [default: `NULL::character varying`]
+  "creation_timestamp" timestamp [default: `NULL::timestamp without time zone`]
+  "latest_child_timestamp" timestamp [default: `NULL::timestamp without time zone`]
+  "object_type" varchar(64) [not null, default: '']
+  "object_id" varchar(64) [not null, default: '']
+  "reference_id" varchar(64) [default: `NULL::character varying`]
+  "reactions" varchar(4000) [default: `NULL::character varying`]
+  "expire_date" timestamp [default: `NULL::timestamp without time zone`]
+  "meta_data" text [default: '']
+
+  Indexes {
+    (actor_type, actor_id) [type: btree, name: "comments_actor_index"]
+    (object_type, object_id, creation_timestamp) [type: btree, name: "comments_object_index"]
+    parent_id [type: btree, name: "comments_parent_id_index"]
+    topmost_parent_id [type: btree, name: "comments_topmost_parent_id_idx"]
+    expire_date [type: btree, name: "expire_date"]
+  }
+}
+
+Table "oc_comments_read_markers" {
+  "user_id" varchar(64) [not null, default: '']
+  "object_type" varchar(64) [not null, default: '']
+  "object_id" varchar(64) [not null, default: '']
+  "marker_datetime" timestamp [default: `NULL::timestamp without time zone`]
+
+  Indexes {
+    (user_id, object_type, object_id) [pk, type: btree, name: "oc_comments_read_markers_pkey"]
+    (object_type, object_id) [type: btree, name: "comments_marker_object_index"]
+  }
+}
+
+Table "oc_accounts" {
+  "uid" varchar(64) [pk, not null, default: '']
+  "data" text [not null, default: '']
+}
+
+Table "oc_twofactor_providers" {
+  "provider_id" varchar(32) [not null]
+  "uid" varchar(64) [not null]
+  "enabled" int2 [not null]
+
+  Indexes {
+    (provider_id, uid) [pk, type: btree, name: "oc_twofactor_providers_pkey"]
+    uid [type: btree, name: "twofactor_providers_uid"]
+  }
+}
+
+Table "oc_collres_collections" {
+  "id" int8 [pk, not null, increment]
+  "name" varchar(64) [not null]
+}
+
+Table "oc_collres_resources" {
+  "collection_id" int8 [not null]
+  "resource_type" varchar(64) [not null]
+  "resource_id" varchar(64) [not null]
+
+  Indexes {
+    (collection_id, resource_type, resource_id) [pk, type: btree, name: "oc_collres_resources_pkey"]
+  }
+}
+
+Table "oc_collres_accesscache" {
+  "user_id" varchar(64) [not null]
+  "collection_id" int8 [not null, default: 0]
+  "resource_type" varchar(64) [not null, default: '']
+  "resource_id" varchar(64) [not null, default: '']
+  "access" bool [default: false]
+
+  Indexes {
+    (user_id, collection_id, resource_type, resource_id) [pk, type: btree, name: "oc_collres_accesscache_pkey"]
+    (user_id, resource_type, resource_id) [type: btree, name: "collres_user_res"]
+  }
+}
+
+Table "oc_login_flow_v2" {
+  "id" int8 [pk, not null, increment]
+  "timestamp" int8 [not null]
+  "started" int2 [not null, default: 0]
+  "poll_token" varchar(255) [unique, not null]
+  "login_token" varchar(255) [unique, not null]
+  "public_key" text [not null]
+  "private_key" text [not null]
+  "client_name" varchar(255) [not null]
+  "login_name" varchar(255) [default: `NULL::character varying`]
+  "server" varchar(255) [default: `NULL::character varying`]
+  "app_password" varchar(1024) [default: `NULL::character varying`]
+
+  Indexes {
+    timestamp [type: btree, name: "timestamp"]
+  }
+}
+
+Table "oc_filecache_extended" {
+  "fileid" int8 [pk, not null]
+  "metadata_etag" varchar(40) [default: `NULL::character varying`]
+  "creation_time" int8 [not null, default: 0]
+  "upload_time" int8 [not null, default: 0]
+
+  Indexes {
+    creation_time [type: btree, name: "fce_ctime_idx"]
+    upload_time [type: btree, name: "fce_utime_idx"]
+  }
+}
+
+Table "oc_direct_edit" {
+  "id" int8 [pk, not null, increment]
+  "editor_id" varchar(64) [not null]
+  "token" varchar(64) [not null]
+  "file_id" int8 [not null]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "share_id" int8
+  "timestamp" int8 [not null]
+  "accessed" bool [default: false]
+  "file_path" varchar(4000) [default: `NULL::character varying`]
+
+  Indexes {
+    timestamp [type: btree, name: "direct_edit_timestamp"]
+    token [type: btree, name: "idx_4d5afeca5f37a13b"]
+  }
+}
+
+Table "oc_webauthn" {
+  "id" int4 [pk, not null, increment]
+  "uid" varchar(64) [not null]
+  "name" varchar(64) [not null]
+  "public_key_credential_id" varchar(512) [not null]
+  "data" text [not null]
+  "user_verification" bool [default: false]
+
+  Indexes {
+    public_key_credential_id [type: btree, name: "webauthn_publickeycredentialid"]
+    uid [type: btree, name: "webauthn_uid"]
+  }
+}
+
+Table "oc_storages_credentials" {
+  "id" int8 [pk, not null, increment]
+  "user" varchar(64) [default: `NULL::character varying`]
+  "identifier" varchar(64) [not null]
+  "credentials" text
+
+  Indexes {
+    (user, identifier) [type: btree, unique, name: "stocred_ui"]
+    user [type: btree, name: "stocred_user"]
+  }
+}
+
+Table "oc_accounts_data" {
+  "id" int8 [pk, not null, increment]
+  "uid" varchar(64) [not null]
+  "name" varchar(64) [not null]
+  "value" varchar(255) [default: '']
+
+  Indexes {
+    name [type: btree, name: "accounts_data_name"]
+    uid [type: btree, name: "accounts_data_uid"]
+    value [type: btree, name: "accounts_data_value"]
+  }
+}
+
+Table "oc_known_users" {
+  "id" int8 [pk, not null, increment]
+  "known_to" varchar(255) [not null]
+  "known_user" varchar(255) [not null]
+
+  Indexes {
+    known_to [type: btree, name: "ku_known_to"]
+    known_user [type: btree, name: "ku_known_user"]
+  }
+}
+
+Table "oc_authorized_groups" {
+  "id" int4 [pk, not null, increment]
+  "group_id" varchar(200) [not null]
+  "class" varchar(200) [not null]
+
+  Indexes {
+    group_id [type: btree, name: "admindel_groupid_idx"]
+  }
+}
+
+Table "oc_profile_config" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [unique, not null]
+  "config" text [not null]
+}
+
+Table "oc_ratelimit_entries" {
+  "id" int8 [pk, not null, increment]
+  "hash" varchar(128) [not null]
+  "delete_after" timestamp [not null]
+
+  Indexes {
+    delete_after [type: btree, name: "ratelimit_delete_after"]
+    hash [type: btree, name: "ratelimit_hash"]
+  }
+}
+
+Table "oc_reactions" {
+  "id" int8 [pk, not null, increment]
+  "parent_id" int8 [not null]
+  "message_id" int8 [not null]
+  "actor_type" varchar(64) [not null, default: '']
+  "actor_id" varchar(64) [not null, default: '']
+  "reaction" varchar(32) [not null]
+
+  Indexes {
+    (parent_id, actor_type, actor_id, reaction) [type: btree, unique, name: "comment_reaction_unique"]
+    reaction [type: btree, name: "comment_reaction"]
+    parent_id [type: btree, name: "comment_reaction_parent_id"]
+  }
+}
+
+Table "oc_textprocessing_tasks" {
+  "id" int8 [pk, not null, increment]
+  "type" varchar(255) [not null]
+  "input" text [not null]
+  "output" text
+  "status" int4 [default: 0]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "app_id" varchar(32) [not null, default: '']
+  "identifier" varchar(255) [not null, default: '']
+  "last_updated" int4 [default: 0]
+  "completion_expected_at" timestamp [default: `NULL::timestamp without time zone`]
+
+  Indexes {
+    (status, type) [type: btree, name: "tp_tasks_status_type_nonunique"]
+    (user_id, app_id, identifier) [type: btree, name: "tp_tasks_uid_appid_ident"]
+    last_updated [type: btree, name: "tp_tasks_updated"]
+  }
+}
+
+Table "oc_text2image_tasks" {
+  "id" int8 [pk, not null, increment]
+  "input" text [not null]
+  "status" int4 [default: 0]
+  "number_of_images" int4 [not null, default: 1]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "app_id" varchar(32) [not null, default: '']
+  "identifier" varchar(255) [default: '']
+  "last_updated" timestamp [default: `NULL::timestamp without time zone`]
+  "completion_expected_at" timestamp [default: `NULL::timestamp without time zone`]
+
+  Indexes {
+    status [type: btree, name: "t2i_tasks_status"]
+    (user_id, app_id, identifier) [type: btree, name: "t2i_tasks_uid_appid_ident"]
+    last_updated [type: btree, name: "t2i_tasks_updated"]
+  }
+}
+
+Table "oc_files_metadata" {
+  "id" int8 [pk, not null, increment]
+  "file_id" int8 [unique, not null]
+  "json" text [not null]
+  "sync_token" varchar(15) [not null]
+  "last_update" timestamp [not null]
+}
+
+Table "oc_files_metadata_index" {
+  "id" int8 [pk, not null, increment]
+  "file_id" int8 [not null]
+  "meta_key" varchar(31) [default: `NULL::character varying`]
+  "meta_value_string" varchar(63) [default: `NULL::character varying`]
+  "meta_value_int" int8
+
+  Indexes {
+    (file_id, meta_key, meta_value_string) [type: btree, name: "f_meta_index"]
+    (file_id, meta_key, meta_value_int) [type: btree, name: "f_meta_index_i"]
+  }
+}
+
+Table "oc_taskprocessing_tasks" {
+  "id" int8 [pk, not null, increment]
+  "type" varchar(255) [not null]
+  "input" text [not null]
+  "output" text
+  "status" int4 [default: 0]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "app_id" varchar(32) [not null, default: '']
+  "custom_id" varchar(255) [default: '']
+  "last_updated" int4 [default: 0]
+  "completion_expected_at" timestamp [default: `NULL::timestamp without time zone`]
+  "progress" float8 [default: '0']
+  "error_message" varchar(4000) [default: `NULL::character varying`]
+  "scheduled_at" int4
+  "started_at" int4
+  "ended_at" int4
+  "webhook_uri" varchar(4000) [default: `NULL::character varying`]
+  "webhook_method" varchar(64) [default: `NULL::character varying`]
+  "allow_cleanup" int2 [not null, default: 1]
+  "user_facing_error_message" varchar(4000) [default: `NULL::character varying`]
+  "include_watermark" int2 [not null, default: 1]
+
+  Indexes {
+    (status, type) [type: btree, name: "taskp_tasks_status_type"]
+    (user_id, app_id, custom_id) [type: btree, name: "taskp_tasks_uid_appid_cid"]
+    last_updated [type: btree, name: "taskp_tasks_updated"]
+  }
+}
+
+Table "oc_sec_signatory" {
+  "id" int8 [pk, not null, increment]
+  "key_id_sum" varchar(127) [not null]
+  "key_id" varchar(512) [not null]
+  "host" varchar(512) [not null]
+  "provider_id" varchar(31) [not null]
+  "account" varchar(127) [default: '']
+  "public_key" text [not null, default: '']
+  "metadata" text [not null, default: '[]']
+  "type" int2 [not null, default: 9]
+  "status" int2 [not null, default: 0]
+  "creation" int4 [default: 0]
+  "last_updated" int4 [default: 0]
+
+  Indexes {
+    (provider_id, host, account) [type: btree, unique, name: "sec_sig_unic"]
+    (key_id_sum, provider_id) [type: btree, name: "sec_sig_key"]
+  }
+}
+
+Table "oc_preview_locations" {
+  "id" int8 [pk, not null]
+  "bucket_name" varchar(40) [not null]
+  "object_store_name" varchar(40) [not null]
+
+  Indexes {
+    (bucket_name, object_store_name) [type: btree, unique, name: "unique_bucket_store"]
+  }
+}
+
+Table "oc_preview_versions" {
+  "id" int8 [pk, not null]
+  "file_id" int8 [not null]
+  "version" varchar(1024) [not null, default: '']
+}
+
+Table "oc_previews" {
+  "id" int8 [pk, not null]
+  "file_id" int8 [not null]
+  "storage_id" int8 [not null]
+  "old_file_id" int8
+  "location_id" int8
+  "width" int4 [not null]
+  "height" int4 [not null]
+  "mimetype_id" int4 [not null]
+  "source_mimetype_id" int4 [not null]
+  "max" bool [not null, default: false]
+  "cropped" bool [not null, default: false]
+  "encrypted" bool [not null, default: false]
+  "etag" bpchar(40) [not null]
+  "mtime" int4 [not null]
+  "size" int4 [not null]
+  "version_id" int8 [not null, default: '-1']
+
+  Indexes {
+    (file_id, width, height, mimetype_id, cropped, version_id) [type: btree, unique, name: "previews_file_uniq_idx"]
+    file_id [type: btree, name: "idx_67dc472793cb796c"]
+  }
+}
+
+Table "oc_activity" {
+  "activity_id" int8 [pk, not null, increment]
+  "timestamp" int4 [not null, default: 0]
+  "priority" int4 [not null, default: 0]
+  "type" varchar(255) [default: `NULL::character varying`]
+  "user" varchar(64) [default: `NULL::character varying`]
+  "affecteduser" varchar(64) [not null]
+  "app" varchar(32) [not null]
+  "subject" varchar(255) [not null]
+  "subjectparams" text [not null]
+  "message" varchar(255) [default: `NULL::character varying`]
+  "messageparams" text
+  "file" varchar(4000) [default: `NULL::character varying`]
+  "link" varchar(4000) [default: `NULL::character varying`]
+  "object_type" varchar(255) [default: `NULL::character varying`]
+  "object_id" int8 [not null, default: 0]
+
+  Indexes {
+    (affecteduser, type, app, timestamp) [type: btree, name: "activity_filter"]
+    (affecteduser, user, timestamp) [type: btree, name: "activity_filter_by"]
+    (object_type, object_id) [type: btree, name: "activity_object"]
+    (affecteduser, object_type, object_id, timestamp) [type: btree, name: "activity_object_user"]
+    (affecteduser, timestamp) [type: btree, name: "activity_user_time"]
+  }
+}
+
+Table "oc_activity_mq" {
+  "mail_id" int8 [pk, not null, increment]
+  "amq_timestamp" int4 [not null, default: 0]
+  "amq_latest_send" int4 [not null, default: 0]
+  "amq_type" varchar(255) [not null]
+  "amq_affecteduser" varchar(64) [not null]
+  "amq_appid" varchar(32) [not null]
+  "amq_subject" varchar(255) [not null]
+  "amq_subjectparams" text
+  "object_type" varchar(255) [default: `NULL::character varying`]
+  "object_id" int8 [not null, default: 0]
+
+  Indexes {
+    amq_latest_send [type: btree, name: "amp_latest_send_time"]
+    amq_timestamp [type: btree, name: "amp_timestamp_time"]
+    amq_affecteduser [type: btree, name: "amp_user"]
+  }
+}
+
+Table "oc_appconfig_ex" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "configkey" varchar(64) [not null]
+  "configvalue" text
+  "sensitive" int2 [not null, default: 0]
+
+  Indexes {
+    (appid, configkey) [type: btree, unique, name: "appconfig_ex__idx"]
+    configkey [type: btree, name: "appconfig_ex__configkey"]
+  }
+}
+
+Table "oc_ex_apps" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [unique, not null]
+  "version" varchar(32) [not null]
+  "name" varchar(64) [not null]
+  "daemon_config_name" varchar(64) [not null, default: '0']
+  "port" int2 [not null]
+  "secret" varchar(256) [not null]
+  "status" json [not null]
+  "enabled" int2 [not null, default: 0]
+  "created_time" int8 [not null]
+
+  Indexes {
+    (daemon_config_name, port) [type: btree, unique, name: "ex_apps_c_port__idx"]
+  }
+}
+
+Table "oc_ex_apps_daemons" {
+  "id" int8 [pk, not null, increment]
+  "name" varchar(64) [unique, not null]
+  "display_name" varchar(255) [not null]
+  "accepts_deploy_id" varchar(64) [not null]
+  "protocol" varchar(32) [not null]
+  "host" varchar(255) [not null]
+  "deploy_config" json [not null]
+}
+
+Table "oc_preferences_ex" {
+  "id" int8 [pk, not null, increment]
+  "userid" varchar(64) [not null]
+  "appid" varchar(32) [not null]
+  "configkey" varchar(64) [not null]
+  "configvalue" text
+  "sensitive" int2 [not null, default: 0]
+
+  Indexes {
+    (userid, appid, configkey) [type: btree, unique, name: "preferences_ex__idx"]
+    configkey [type: btree, name: "preferences_ex__configkey"]
+  }
+}
+
+Table "oc_ex_ui_top_menu" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "name" varchar(32) [not null]
+  "display_name" varchar(32) [not null]
+  "icon" varchar(255) [default: '']
+  "admin_required" int2 [not null, default: 0]
+
+  Indexes {
+    (appid, name) [type: btree, unique, name: "ui_top_menu__idx"]
+  }
+}
+
+Table "oc_ex_ui_states" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "type" varchar(16) [not null]
+  "name" varchar(32) [not null]
+  "key" varchar(64) [not null]
+  "value" json [not null]
+
+  Indexes {
+    (appid, type, name, key) [type: btree, unique, name: "ui_state__idx"]
+  }
+}
+
+Table "oc_ex_ui_scripts" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "type" varchar(16) [not null]
+  "name" varchar(32) [not null]
+  "path" varchar(410) [not null]
+  "after_app_id" varchar(32) [default: `NULL::character varying`]
+
+  Indexes {
+    (appid, type, name, path) [type: btree, unique, name: "ui_script__idx"]
+  }
+}
+
+Table "oc_ex_ui_styles" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "type" varchar(16) [not null]
+  "name" varchar(32) [not null]
+  "path" varchar(410) [not null]
+
+  Indexes {
+    (appid, type, name, path) [type: btree, unique, name: "ui_style__idx"]
+  }
+}
+
+Table "oc_ex_ui_files_actions" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "name" varchar(64) [not null]
+  "display_name" varchar(64) [not null]
+  "mime" text [not null, default: 'file']
+  "permissions" varchar(255) [not null]
+  "order" int8 [not null, default: 0]
+  "icon" varchar(255) [default: '']
+  "action_handler" varchar(64) [not null]
+  "version" varchar(64) [not null, default: '1.0']
+
+  Indexes {
+    (appid, name) [type: btree, unique, name: "ex_ui_files_actions__idx"]
+  }
+}
+
+Table "oc_ex_settings_forms" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "formid" varchar(64) [not null]
+  "scheme" json [not null]
+
+  Indexes {
+    (appid, formid) [type: btree, unique, name: "ex_settings_forms__idx"]
+  }
+}
+
+Table "oc_ex_occ_commands" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "name" varchar(64) [not null]
+  "description" varchar(255) [default: `NULL::character varying`]
+  "hidden" int2 [not null, default: 0]
+  "arguments" json [not null]
+  "options" json [not null]
+  "usages" json [not null]
+  "execute_handler" varchar(410) [not null]
+
+  Indexes {
+    (appid, name) [type: btree, unique, name: "ex_occ_commands__idx"]
+  }
+}
+
+Table "oc_ex_task_processing" {
+  "id" int8 [pk, not null, increment]
+  "app_id" varchar(32) [not null]
+  "name" varchar(255) [not null]
+  "display_name" varchar(255) [not null]
+  "task_type" varchar(255) [not null]
+  "custom_task_type" text
+  "provider" text [not null]
+
+  Indexes {
+    (app_id, name, task_type) [type: btree, unique, name: "task_processing_idx"]
+  }
+}
+
+Table "oc_ex_apps_routes" {
+  "id" int4 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "url" varchar(512) [not null]
+  "verb" varchar(64) [not null]
+  "access_level" int4 [not null, default: 0]
+  "headers_to_exclude" varchar(512) [default: `NULL::character varying`]
+  "bruteforce_protection" varchar(512) [default: `NULL::character varying`]
+
+  Indexes {
+    appid [type: btree, name: "ex_apps_routes_appid"]
+  }
+}
+
+Table "oc_ex_deploy_options" {
+  "id" int8 [pk, not null, increment]
+  "appid" varchar(32) [not null]
+  "type" varchar(32) [not null]
+  "value" json [not null]
+
+  Indexes {
+    (appid, type) [type: btree, unique, name: "deploy_options__idx"]
+  }
+}
+
+Table "oc_circles_circle" {
+  "id" int4 [pk, not null, increment]
+  "unique_id" varchar(31) [unique, not null]
+  "name" varchar(127) [not null]
+  "display_name" varchar(255) [default: '']
+  "sanitized_name" varchar(127) [default: '']
+  "instance" varchar(255) [default: '']
+  "config" int4
+  "source" int4
+  "settings" text
+  "description" text
+  "creation" timestamp [default: `NULL::timestamp without time zone`]
+  "contact_addressbook" int4
+  "contact_groupname" varchar(127) [default: `NULL::character varying`]
+
+  Indexes {
+    display_name [type: btree, name: "dname"]
+    instance [type: btree, name: "idx_8195f5484230b1de"]
+    source [type: btree, name: "idx_8195f5485f8a7f73"]
+    sanitized_name [type: btree, name: "idx_8195f548c317b362"]
+    config [type: btree, name: "idx_8195f548d48a2f7c"]
+  }
+}
+
+Table "oc_circles_member" {
+  "id" int4 [pk, not null, increment]
+  "single_id" varchar(31) [default: `NULL::character varying`]
+  "circle_id" varchar(31) [not null]
+  "member_id" varchar(31) [default: `NULL::character varying`]
+  "user_id" varchar(127) [not null]
+  "user_type" int2 [not null, default: 1]
+  "instance" varchar(255) [default: '']
+  "invited_by" varchar(31) [default: `NULL::character varying`]
+  "level" int2 [not null]
+  "status" varchar(15) [default: `NULL::character varying`]
+  "note" text
+  "cached_name" varchar(255) [default: '']
+  "cached_update" timestamp [default: `NULL::timestamp without time zone`]
+  "contact_id" varchar(127) [default: `NULL::character varying`]
+  "contact_meta" text
+  "joined" timestamp [default: `NULL::timestamp without time zone`]
+
+  Indexes {
+    (circle_id, single_id) [type: btree, name: "circles_member_cisi"]
+    (circle_id, single_id, user_id, user_type, instance, level) [type: btree, name: "circles_member_cisiuiutil"]
+    contact_id [type: btree, name: "idx_25c66a49e7a1254a"]
+  }
+}
+
+Table "oc_circles_remote" {
+  "id" int4 [pk, not null, increment]
+  "type" varchar(15) [not null, default: 'Unknown']
+  "interface" int4 [not null, default: 0]
+  "uid" varchar(20) [default: `NULL::character varying`]
+  "instance" varchar(127) [unique, default: `NULL::character varying`]
+  "href" varchar(254) [default: `NULL::character varying`]
+  "item" text
+  "creation" timestamp [default: `NULL::timestamp without time zone`]
+
+  Indexes {
+    href [type: btree, name: "idx_f94ef8334f8e741"]
+    uid [type: btree, name: "idx_f94ef83539b0606"]
+  }
+}
+
+Table "oc_circles_membership" {
+  "circle_id" varchar(31) [not null]
+  "single_id" varchar(31) [not null]
+  "level" int4 [not null]
+  "inheritance_first" varchar(31) [not null]
+  "inheritance_last" varchar(31) [not null]
+  "inheritance_depth" int4 [not null]
+  "inheritance_path" text [not null]
+
+  Indexes {
+    (single_id, circle_id) [pk, type: btree, name: "oc_circles_membership_pkey"]
+    (inheritance_first, inheritance_last, circle_id) [type: btree, name: "circles_membership_ifilci"]
+    single_id [type: btree, name: "idx_8fc816eae7c1d92b"]
+  }
+}
+
+Table "oc_circles_token" {
+  "id" int4 [pk, not null, increment]
+  "share_id" int4
+  "circle_id" varchar(31) [default: `NULL::character varying`]
+  "single_id" varchar(31) [default: `NULL::character varying`]
+  "member_id" varchar(31) [default: `NULL::character varying`]
+  "token" varchar(31) [default: `NULL::character varying`]
+  "password" varchar(127) [default: `NULL::character varying`]
+  "accepted" int4
+
+  Indexes {
+    (share_id, circle_id, single_id, member_id, token) [type: btree, unique, name: "sicisimit"]
+  }
+}
+
+Table "oc_circles_mount" {
+  "id" int4 [pk, not null, increment]
+  "mount_id" varchar(31) [not null]
+  "circle_id" varchar(31) [not null]
+  "single_id" varchar(31) [not null]
+  "token" varchar(63) [default: `NULL::character varying`]
+  "parent" int4
+  "mountpoint" text
+  "mountpoint_hash" varchar(64) [default: `NULL::character varying`]
+  "remote" varchar(255) [default: '']
+  "remote_id" int4 [not null, default: 0]
+
+  Indexes {
+    (circle_id, mount_id, parent, token) [type: btree, name: "circles_mount_cimipt"]
+    (circle_id, remote, remote_id) [type: btree, name: "m_sid_rmt_rid"]
+  }
+}
+
+Table "oc_circles_mountpoint" {
+  "id" int4 [pk, not null, increment]
+  "mount_id" varchar(31) [not null]
+  "single_id" varchar(31) [not null]
+  "mountpoint" text
+  "mountpoint_hash" varchar(64) [default: `NULL::character varying`]
+
+  Indexes {
+    (single_id, mountpoint_hash) [type: btree, unique, name: "mp_sid_hash"]
+    (mount_id, single_id) [type: btree, name: "circles_mountpoint_ms"]
+  }
+}
+
+Table "oc_circles_share_lock" {
+  "id" int4 [pk, not null, increment]
+  "item_id" varchar(31) [not null]
+  "circle_id" varchar(31) [not null]
+  "instance" varchar(127) [not null]
+
+  Indexes {
+    (item_id, circle_id) [type: btree, unique, name: "uniq_337f52f8126f525e70ee2ff6"]
+  }
+}
+
+Table "oc_circles_event" {
+  "token" varchar(63) [not null]
+  "instance" varchar(255) [not null]
+  "event" text
+  "result" text
+  "interface" int4 [not null, default: 0]
+  "severity" int4
+  "retry" int4
+  "status" int4
+  "updated" timestamp [default: `NULL::timestamp without time zone`]
+  "creation" int8
+
+  Indexes {
+    (token, instance) [pk, type: btree, name: "oc_circles_event_pkey"]
+  }
+}
+
+Table "oc_federated_invites" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [not null]
+  "recipient_provider" varchar(2083) [default: `NULL::character varying`]
+  "recipient_user_id" varchar(1024) [default: `NULL::character varying`]
+  "recipient_name" varchar(1024) [default: `NULL::character varying`]
+  "recipient_email" varchar(320) [default: `NULL::character varying`]
+  "token" varchar(60) [unique, not null]
+  "accepted" bool [default: false]
+  "created_at" int8 [not null]
+  "expired_at" int8
+  "accepted_at" int8
+}
+
+Table "oc_recent_contact" {
+  "id" int4 [pk, not null, increment]
+  "actor_uid" varchar(64) [not null]
+  "uid" varchar(64) [default: `NULL::character varying`]
+  "email" varchar(255) [default: `NULL::character varying`]
+  "federated_cloud_id" varchar(255) [default: `NULL::character varying`]
+  "card" bytea [not null]
+  "last_contact" int4 [not null]
+
+  Indexes {
+    actor_uid [type: btree, name: "recent_contact_actor_uid"]
+    email [type: btree, name: "recent_contact_email"]
+    federated_cloud_id [type: btree, name: "recent_contact_fed_id"]
+    (id, actor_uid) [type: btree, name: "recent_contact_id_uid"]
+    last_contact [type: btree, name: "recent_contact_last_contact"]
+    uid [type: btree, name: "recent_contact_uid"]
+  }
+}
+
+Table "oc_addressbooks" {
+  "id" int8 [pk, not null, increment]
+  "principaluri" varchar(255) [default: `NULL::character varying`]
+  "displayname" varchar(255) [default: `NULL::character varying`]
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "description" varchar(255) [default: `NULL::character varying`]
+  "synctoken" int4 [not null, default: 1]
+
+  Indexes {
+    (principaluri, uri) [type: btree, unique, name: "addressbook_index"]
+  }
+}
+
+Table "oc_cards" {
+  "id" int8 [pk, not null, increment]
+  "addressbookid" int8 [not null, default: 0]
+  "carddata" bytea
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "lastmodified" int8
+  "etag" varchar(32) [default: `NULL::character varying`]
+  "size" int8 [not null]
+  "uid" varchar(255) [default: `NULL::character varying`]
+
+  Indexes {
+    (addressbookid, uri) [type: btree, name: "cards_abiduri"]
+  }
+}
+
+Table "oc_addressbookchanges" {
+  "id" int8 [pk, not null, increment]
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "synctoken" int4 [not null, default: 1]
+  "addressbookid" int8 [not null]
+  "operation" int2 [not null]
+  "created_at" int4 [not null, default: 0]
+
+  Indexes {
+    (addressbookid, synctoken) [type: btree, name: "addressbookid_synctoken"]
+  }
+}
+
+Table "oc_calendarobjects" {
+  "id" int8 [pk, not null, increment]
+  "calendardata" bytea
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "calendarid" int8 [not null]
+  "lastmodified" int4
+  "etag" varchar(32) [default: `NULL::character varying`]
+  "size" int8 [not null]
+  "componenttype" varchar(8) [default: `NULL::character varying`]
+  "firstoccurence" int8
+  "lastoccurence" int8
+  "uid" varchar(512) [default: `NULL::character varying`]
+  "classification" int4 [default: 0]
+  "calendartype" int4 [not null, default: 0]
+  "deleted_at" int4
+
+  Indexes {
+    (calendarid, calendartype, uid) [type: btree, unique, name: "calobjects_by_uid_index"]
+    (calendarid, calendartype, uri) [type: btree, unique, name: "calobjects_index"]
+    classification [type: btree, name: "calobj_clssfction_index"]
+  }
+}
+
+Table "oc_calendars" {
+  "id" int8 [pk, not null, increment]
+  "principaluri" varchar(255) [default: `NULL::character varying`]
+  "displayname" varchar(255) [default: `NULL::character varying`]
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "synctoken" int4 [not null, default: 1]
+  "description" varchar(255) [default: `NULL::character varying`]
+  "calendarorder" int4 [not null, default: 0]
+  "calendarcolor" varchar(255) [default: `NULL::character varying`]
+  "timezone" text
+  "components" varchar(64) [default: `NULL::character varying`]
+  "transparent" int2 [not null, default: 0]
+  "deleted_at" int4
+
+  Indexes {
+    (principaluri, uri) [type: btree, unique, name: "calendars_index"]
+    (principaluri, deleted_at) [type: btree, name: "cals_princ_del_idx"]
+  }
+}
+
+Table "oc_calendarchanges" {
+  "id" int8 [pk, not null, increment]
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "synctoken" int4 [not null, default: 1]
+  "calendarid" int8 [not null]
+  "operation" int2 [not null]
+  "calendartype" int4 [not null, default: 0]
+  "created_at" int4 [not null, default: 0]
+
+  Indexes {
+    (calendarid, calendartype, synctoken) [type: btree, name: "calid_type_synctoken"]
+  }
+}
+
+Table "oc_calendarsubscriptions" {
+  "id" int8 [pk, not null, increment]
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "principaluri" varchar(255) [default: `NULL::character varying`]
+  "displayname" varchar(100) [default: `NULL::character varying`]
+  "refreshrate" varchar(10) [default: `NULL::character varying`]
+  "calendarorder" int4 [not null, default: 0]
+  "calendarcolor" varchar(255) [default: `NULL::character varying`]
+  "striptodos" int2
+  "stripalarms" int2
+  "stripattachments" int2
+  "lastmodified" int4
+  "synctoken" int4 [not null, default: 1]
+  "source" text
+
+  Indexes {
+    (principaluri, uri) [type: btree, unique, name: "calsub_index"]
+  }
+}
+
+Table "oc_schedulingobjects" {
+  "id" int8 [pk, not null, increment]
+  "principaluri" varchar(255) [default: `NULL::character varying`]
+  "calendardata" bytea
+  "uri" varchar(255) [default: `NULL::character varying`]
+  "lastmodified" int4
+  "etag" varchar(32) [default: `NULL::character varying`]
+  "size" int8 [not null]
+
+  Indexes {
+    lastmodified [type: btree, name: "schedulobj_lastmodified_idx"]
+    principaluri [type: btree, name: "schedulobj_principuri_index"]
+  }
+}
+
+Table "oc_cards_properties" {
+  "id" int8 [pk, not null, increment]
+  "addressbookid" int8 [not null, default: 0]
+  "cardid" int8 [not null, default: 0]
+  "name" varchar(64) [default: `NULL::character varying`]
+  "value" varchar(255) [default: `NULL::character varying`]
+  "preferred" int4 [not null, default: 1]
+
+  Indexes {
+    cardid [type: btree, name: "card_contactid_index"]
+    name [type: btree, name: "card_name_index"]
+    value [type: btree, name: "card_value_index"]
+    (addressbookid, name, value) [type: btree, name: "cards_prop_abid_name_value"]
+  }
+}
+
+Table "oc_calendarobjects_props" {
+  "id" int8 [pk, not null, increment]
+  "calendarid" int8 [not null, default: 0]
+  "objectid" int8 [not null, default: 0]
+  "name" varchar(64) [default: `NULL::character varying`]
+  "parameter" varchar(64) [default: `NULL::character varying`]
+  "value" varchar(255) [default: `NULL::character varying`]
+  "calendartype" int4 [not null, default: 0]
+
+  Indexes {
+    (calendarid, calendartype) [type: btree, name: "calendarobject_calid_index"]
+    (objectid, calendartype) [type: btree, name: "calendarobject_index"]
+    (name, calendartype) [type: btree, name: "calendarobject_name_index"]
+    (value, calendartype) [type: btree, name: "calendarobject_value_index"]
+  }
+}
+
+Table "oc_dav_shares" {
+  "id" int8 [pk, not null, increment]
+  "principaluri" varchar(255) [default: `NULL::character varying`]
+  "type" varchar(255) [default: `NULL::character varying`]
+  "access" int2
+  "resourceid" int8 [not null]
+  "publicuri" varchar(255) [default: `NULL::character varying`]
+  "token" varchar(255) [default: `NULL::character varying`]
+
+  Indexes {
+    (principaluri, resourceid, type, publicuri) [type: btree, unique, name: "dav_shares_index"]
+    (resourceid, access) [type: btree, name: "dav_shares_resourceid_access"]
+    (resourceid, type) [type: btree, name: "dav_shares_resourceid_type"]
+  }
+}
+
+Table "oc_directlink" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "file_id" int8 [not null]
+  "token" varchar(60) [default: `NULL::character varying`]
+  "expiration" int8 [not null]
+
+  Indexes {
+    expiration [type: btree, name: "directlink_expiration_idx"]
+    token [type: btree, name: "directlink_token_idx"]
+  }
+}
+
+Table "oc_calendar_resources" {
+  "id" int8 [pk, not null, increment]
+  "backend_id" varchar(64) [default: `NULL::character varying`]
+  "resource_id" varchar(64) [default: `NULL::character varying`]
+  "email" varchar(255) [default: `NULL::character varying`]
+  "displayname" varchar(255) [default: `NULL::character varying`]
+  "group_restrictions" varchar(4000) [default: `NULL::character varying`]
+
+  Indexes {
+    (backend_id, resource_id) [type: btree, name: "calendar_resources_bkdrsc"]
+    email [type: btree, name: "calendar_resources_email"]
+    displayname [type: btree, name: "calendar_resources_name"]
+  }
+}
+
+Table "oc_calendar_rooms" {
+  "id" int8 [pk, not null, increment]
+  "backend_id" varchar(64) [default: `NULL::character varying`]
+  "resource_id" varchar(64) [default: `NULL::character varying`]
+  "email" varchar(255) [default: `NULL::character varying`]
+  "displayname" varchar(255) [default: `NULL::character varying`]
+  "group_restrictions" varchar(4000) [default: `NULL::character varying`]
+
+  Indexes {
+    (backend_id, resource_id) [type: btree, name: "calendar_rooms_bkdrsc"]
+    email [type: btree, name: "calendar_rooms_email"]
+    displayname [type: btree, name: "calendar_rooms_name"]
+  }
+}
+
+Table "oc_calendar_invitations" {
+  "id" int8 [pk, not null, increment]
+  "uid" varchar(512) [not null]
+  "recurrenceid" varchar(255) [default: `NULL::character varying`]
+  "attendee" varchar(255) [not null]
+  "organizer" varchar(255) [not null]
+  "sequence" int8
+  "token" varchar(60) [not null]
+  "expiration" int8 [not null]
+
+  Indexes {
+    token [type: btree, name: "calendar_invitation_tokens"]
+  }
+}
+
+Table "oc_calendar_resources_md" {
+  "id" int8 [pk, not null, increment]
+  "resource_id" int8 [not null]
+  "key" varchar(255) [not null]
+  "value" varchar(4000) [default: `NULL::character varying`]
+
+  Indexes {
+    (resource_id, key) [type: btree, name: "calendar_resources_md_idk"]
+  }
+}
+
+Table "oc_calendar_rooms_md" {
+  "id" int8 [pk, not null, increment]
+  "room_id" int8 [not null]
+  "key" varchar(255) [not null]
+  "value" varchar(4000) [default: `NULL::character varying`]
+
+  Indexes {
+    (room_id, key) [type: btree, name: "calendar_rooms_md_idk"]
+  }
+}
+
+Table "oc_dav_cal_proxy" {
+  "id" int8 [pk, not null, increment]
+  "owner_id" varchar(64) [not null]
+  "proxy_id" varchar(64) [not null]
+  "permissions" int4
+
+  Indexes {
+    (owner_id, proxy_id, permissions) [type: btree, unique, name: "dav_cal_proxy_uidx"]
+    proxy_id [type: btree, name: "dav_cal_proxy_ipid"]
+  }
+}
+
+Table "oc_calendar_reminders" {
+  "id" int8 [pk, not null, increment]
+  "calendar_id" int8 [not null]
+  "object_id" int8 [not null]
+  "is_recurring" int2
+  "uid" varchar(512) [not null]
+  "recurrence_id" int8
+  "is_recurrence_exception" int2 [not null]
+  "event_hash" varchar(255) [not null]
+  "alarm_hash" varchar(255) [not null]
+  "type" varchar(255) [not null]
+  "is_relative" int2 [not null]
+  "notification_date" int8 [not null]
+  "is_repeat_based" int2 [not null]
+
+  Indexes {
+    object_id [type: btree, name: "calendar_reminder_objid"]
+    (uid, recurrence_id) [type: btree, name: "calendar_reminder_uidrec"]
+  }
+}
+
+Table "oc_dav_absence" {
+  "id" int4 [pk, not null, increment]
+  "user_id" varchar(64) [unique, not null]
+  "first_day" varchar(10) [not null]
+  "last_day" varchar(10) [not null]
+  "status" varchar(100) [not null]
+  "message" text [not null]
+  "replacement_user_id" varchar(64) [default: '']
+  "replacement_user_display_name" varchar(64) [default: '']
+}
+
+Table "oc_calendars_federated" {
+  "id" int8 [pk, not null, increment]
+  "display_name" varchar(255) [not null]
+  "color" varchar(7) [default: `NULL::character varying`]
+  "uri" varchar(255) [not null]
+  "principaluri" varchar(255) [not null]
+  "remote_url" varchar(255) [not null]
+  "token" varchar(255) [not null]
+  "sync_token" int4 [not null, default: 0]
+  "last_sync" int8
+  "shared_by" varchar(255) [not null]
+  "shared_by_display_name" varchar(255) [not null]
+  "components" varchar(255) [not null]
+  "permissions" int4 [not null]
+
+  Indexes {
+    last_sync [type: btree, name: "fedcals_last_sync_index"]
+    (principaluri, uri) [type: btree, name: "fedcals_uris_index"]
+  }
+}
+
+Table "oc_federated_reshares" {
+  "share_id" int8 [pk, not null]
+  "remote_id" varchar(255) [default: '']
+}
+
+Table "oc_trusted_servers" {
+  "id" int4 [pk, not null, increment]
+  "url" varchar(512) [not null]
+  "url_hash" varchar(255) [unique, not null, default: '']
+  "token" varchar(128) [default: `NULL::character varying`]
+  "shared_secret" varchar(256) [default: `NULL::character varying`]
+  "status" int4 [not null, default: 2]
+  "sync_token" varchar(512) [default: `NULL::character varying`]
+}
+
+Table "oc_user_transfer_owner" {
+  "id" int8 [pk, not null, increment]
+  "source_user" varchar(64) [not null]
+  "target_user" varchar(64) [not null]
+  "file_id" int8 [not null]
+  "node_name" varchar(255) [not null]
+}
+
+Table "oc_open_local_editor" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [not null]
+  "path_hash" varchar(64) [not null]
+  "expiration_time" int8 [not null]
+  "token" varchar(128) [not null]
+
+  Indexes {
+    (user_id, path_hash, token) [type: btree, unique, name: "openlocal_user_path_token"]
+  }
+}
+
+Table "oc_shares_limits" {
+  "id" varchar(32) [pk, not null]
+  "limit" int8 [not null]
+  "downloads" int8 [not null, default: 0]
+}
+
+Table "oc_files_reminders" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [not null]
+  "file_id" int8 [not null]
+  "due_date" timestamp [not null]
+  "updated_at" timestamp [not null]
+  "created_at" timestamp [not null]
+  "notified" bool [default: false]
+
+  Indexes {
+    (user_id, file_id, due_date) [type: btree, unique, name: "reminders_uniq_idx"]
+  }
+}
+
+Table "oc_share_external" {
+  "id" int8 [pk, not null]
+  "parent" int8 [default: '-1']
+  "share_type" int4
+  "remote" varchar(512) [not null]
+  "remote_id" varchar(255) [default: '']
+  "share_token" varchar(64) [not null]
+  "password" varchar(64) [default: `NULL::character varying`]
+  "name" varchar(4000) [not null]
+  "owner" varchar(255) [not null]
+  "user" varchar(64) [not null]
+  "mountpoint" varchar(4000) [not null]
+  "mountpoint_hash" varchar(32) [not null]
+  "accepted" int4 [not null, default: 0]
+
+  Indexes {
+    (user, mountpoint_hash) [type: btree, unique, name: "sh_external_mp"]
+    (user, mountpoint) [type: btree, name: "user_mountpoint_index"]
+  }
+}
+
+Table "oc_files_trash" {
+  "auto_id" int8 [pk, not null, increment]
+  "id" varchar(250) [not null, default: '']
+  "user" varchar(64) [not null, default: '']
+  "timestamp" varchar(12) [not null, default: '']
+  "location" varchar(512) [not null, default: '']
+  "type" varchar(4) [default: `NULL::character varying`]
+  "mime" varchar(255) [default: `NULL::character varying`]
+  "deleted_by" varchar(64) [default: `NULL::character varying`]
+
+  Indexes {
+    id [type: btree, name: "id_index"]
+    timestamp [type: btree, name: "timestamp_index"]
+    user [type: btree, name: "user_index"]
+  }
+}
+
+Table "oc_files_versions" {
+  "id" int8 [pk, not null, increment]
+  "file_id" int8 [not null]
+  "timestamp" int8 [not null]
+  "size" int8 [not null]
+  "mimetype" int8 [not null]
+  "metadata" json [not null]
+
+  Indexes {
+    (file_id, timestamp) [type: btree, unique, name: "files_versions_uniq_index"]
+  }
+}
+
+Table "oc_notifications" {
+  "notification_id" int4 [pk, not null, increment]
+  "app" varchar(32) [not null]
+  "user" varchar(64) [not null]
+  "timestamp" int4 [not null, default: 0]
+  "object_type" varchar(64) [not null]
+  "object_id" varchar(64) [not null]
+  "subject" varchar(64) [not null]
+  "subject_parameters" text
+  "message" varchar(64) [default: `NULL::character varying`]
+  "message_parameters" text
+  "link" varchar(4000) [default: `NULL::character varying`]
+  "icon" varchar(4000) [default: `NULL::character varying`]
+  "actions" text
+
+  Indexes {
+    app [type: btree, name: "oc_notifications_app"]
+    (object_type, object_id) [type: btree, name: "oc_notifications_object"]
+    timestamp [type: btree, name: "oc_notifications_timestamp"]
+    user [type: btree, name: "oc_notifications_user"]
+  }
+}
+
+Table "oc_notifications_pushhash" {
+  "id" int4 [pk, not null, increment]
+  "uid" varchar(64) [not null]
+  "token" int4 [not null, default: 0]
+  "deviceidentifier" varchar(128) [not null]
+  "devicepublickey" varchar(512) [not null]
+  "devicepublickeyhash" varchar(128) [not null]
+  "pushtokenhash" varchar(128) [not null]
+  "proxyserver" varchar(256) [not null]
+  "apptype" varchar(32) [not null, default: 'unknown']
+
+  Indexes {
+    (uid, token) [type: btree, unique, name: "oc_npushhash_uid"]
+    deviceidentifier [type: btree, name: "oc_npushhash_di"]
+  }
+}
+
+Table "oc_notifications_settings" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [unique, not null]
+  "batch_time" int4 [not null, default: 0]
+  "last_send_id" int8 [not null, default: 0]
+  "next_send_time" int4 [not null, default: 0]
+
+  Indexes {
+    next_send_time [type: btree, name: "notset_nextsend"]
+  }
+}
+
+Table "oc_oauth2_clients" {
+  "id" int4 [pk, not null, increment]
+  "name" varchar(64) [not null]
+  "redirect_uri" varchar(2000) [not null]
+  "client_identifier" varchar(64) [unique, not null]
+  "secret" varchar(512) [not null]
+}
+
+Table "oc_oauth2_access_tokens" {
+  "id" int4 [pk, not null, increment]
+  "token_id" int4 [not null]
+  "client_id" int4 [not null]
+  "hashed_code" varchar(128) [unique, not null]
+  "encrypted_token" varchar(786) [not null]
+  "code_created_at" int8 [not null, default: 0]
+  "token_count" int8 [not null, default: 0]
+
+  Indexes {
+    client_id [type: btree, name: "oauth2_access_client_id_idx"]
+    (token_count, code_created_at) [type: btree, name: "oauth2_tk_c_created_idx"]
+  }
+}
+
+Table "oc_photos_albums" {
+  "album_id" int8 [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "user" varchar(255) [not null]
+  "created" int8 [not null]
+  "location" varchar(255) [not null]
+  "last_added_photo" int8 [not null]
+  "filters" text
+
+  Indexes {
+    user [type: btree, name: "pa_user"]
+  }
+}
+
+Table "oc_photos_albums_files" {
+  "album_file_id" int8 [pk, not null, increment]
+  "album_id" int8 [not null]
+  "file_id" int8 [not null]
+  "added" int8 [not null]
+  "owner" varchar(64) [default: `NULL::character varying`]
+
+  Indexes {
+    (album_id, file_id) [type: btree, unique, name: "paf_album_file"]
+    album_id [type: btree, name: "paf_folder"]
+  }
+}
+
+Table "oc_photos_albums_collabs" {
+  "id" int8 [pk, not null, increment]
+  "album_id" int8 [not null]
+  "collaborator_id" varchar(64) [not null]
+  "collaborator_type" int4 [not null]
+
+  Indexes {
+    (album_id, collaborator_id, collaborator_type) [type: btree, unique, name: "album_collabs_uniq_collab"]
+  }
+}
+
+Table "oc_privacy_admins" {
+  "id" int4 [pk, not null, increment]
+  "displayname" varchar(64) [not null, default: '']
+}
+
+Table "oc_text_documents" {
+  "id" int8 [pk, not null]
+  "current_version" int8 [default: 0]
+  "last_saved_version" int8 [default: 0]
+  "last_saved_version_time" int8 [not null]
+  "last_saved_version_etag" varchar(64) [default: '']
+  "base_version_etag" varchar(64) [default: '']
+  "checksum" varchar(8) [default: `NULL::character varying`]
+}
+
+Table "oc_text_sessions" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "guest_name" varchar(64) [default: `NULL::character varying`]
+  "color" varchar(7) [default: `NULL::character varying`]
+  "token" varchar(64) [not null]
+  "document_id" int8 [not null]
+  "last_contact" int8 [not null]
+  "last_awareness_message" text [default: '']
+
+  Indexes {
+    token [type: btree, name: "rd_session_token_idx"]
+    (document_id, last_contact) [type: btree, name: "ts_docid_lastcontact"]
+    last_contact [type: btree, name: "ts_lastcontact"]
+  }
+}
+
+Table "oc_text_steps" {
+  "id" int8 [pk, not null, increment]
+  "document_id" int8 [not null]
+  "session_id" int8 [not null]
+  "data" text [not null]
+  "version" int8 [default: 0]
+  "timestamp" int8 [not null, default: 0]
+
+  Indexes {
+    document_id [type: btree, name: "rd_steps_did_idx"]
+    version [type: btree, name: "rd_steps_version_idx"]
+    session_id [type: btree, name: "textstep_session"]
+  }
+}
+
+Table "oc_twofactor_backupcodes" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(64) [not null, default: '']
+  "code" varchar(128) [not null]
+  "used" int2 [not null, default: 0]
+
+  Indexes {
+    user_id [type: btree, name: "twofactor_backupcodes_uid"]
+  }
+}
+
+Table "oc_twofactor_totp_secrets" {
+  "id" int4 [pk, not null, increment]
+  "user_id" varchar(64) [unique, not null, default: '']
+  "secret" text [not null]
+  "state" int4 [not null, default: 2]
+  "last_counter" int8 [not null, default: '-1']
+}
+
+Table "oc_user_status" {
+  "id" int8 [pk, not null, increment]
+  "user_id" varchar(255) [unique, not null]
+  "status" varchar(255) [not null]
+  "status_timestamp" int4 [not null]
+  "is_user_defined" bool
+  "message_id" varchar(255) [default: `NULL::character varying`]
+  "custom_icon" varchar(255) [default: `NULL::character varying`]
+  "custom_message" text
+  "clear_at" int4
+  "is_backup" bool [default: false]
+  "status_message_timestamp" int4 [not null, default: 0]
+
+  Indexes {
+    clear_at [type: btree, name: "user_status_clr_ix"]
+    (is_user_defined, status) [type: btree, name: "user_status_iud_ix"]
+    status_message_timestamp [type: btree, name: "user_status_mtstmp_ix"]
+    status_timestamp [type: btree, name: "user_status_tstmp_ix"]
+  }
+}
+
+Table "oc_webhook_listeners" {
+  "id" int8 [pk, not null, increment]
+  "app_id" varchar(64) [default: `NULL::character varying`]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "http_method" varchar(32) [not null]
+  "uri" varchar(4000) [not null]
+  "event" varchar(4000) [not null]
+  "event_filter" text
+  "user_id_filter" varchar(64) [default: `NULL::character varying`]
+  "headers" text
+  "auth_method" varchar(16) [not null, default: '']
+  "auth_data" text
+  "token_needed" text
+}
+
+Table "oc_webhook_tokens" {
+  "id" int8 [pk, not null, increment]
+  "token_id" int8 [not null]
+  "user_id" varchar(64) [default: `NULL::character varying`]
+  "created_at" int8 [not null]
+}
+
+Table "oc_flow_checks" {
+  "id" int4 [pk, not null, increment]
+  "class" varchar(256) [not null, default: '']
+  "operator" varchar(16) [not null, default: '']
+  "value" text
+  "hash" varchar(32) [unique, not null, default: '']
+}
+
+Table "oc_flow_operations" {
+  "id" int4 [pk, not null, increment]
+  "class" varchar(256) [not null, default: '']
+  "name" varchar(256) [default: '']
+  "checks" text
+  "operation" text
+  "entity" varchar(256) [not null, default: 'OCA\WorkflowEngine\Entity\File']
+  "events" text [not null, default: '[]']
+}
+
+Table "oc_flow_operations_scope" {
+  "id" int8 [pk, not null, increment]
+  "operation_id" int4 [not null, default: 0]
+  "type" int4 [not null, default: 0]
+  "value" varchar(64) [default: '']
+
+  Indexes {
+    (operation_id, type, value) [type: btree, unique, name: "flow_unique_scope"]
+  }
+}

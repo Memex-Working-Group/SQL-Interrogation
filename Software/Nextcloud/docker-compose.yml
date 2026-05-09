@@ -1,0 +1,45 @@
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    container_name: nextcloud-db
+    volumes:
+      - ./container-data/db/db_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    restart: always
+    container_name: nextcloud-redis
+
+  app:
+    image: nextcloud:latest
+    restart: always
+    container_name: nextcloud-app
+    ports:
+      - 8080:80
+    volumes:
+      - ./container-data/app/nextcloud_data:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
