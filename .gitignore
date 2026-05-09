@@ -2,8 +2,9 @@ conatiner-paths
 container-data
 env
 
+
 # For dbml VS Code Extension
-dbdiagram
+*dbdiagram
 
 # https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Node.gitignore
 # Logs
