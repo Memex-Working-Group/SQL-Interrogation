@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: wordpress-db
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./container-data/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress-app
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8081:80"
+    volumes:
+      - ./container-data/app:/var/www/html
