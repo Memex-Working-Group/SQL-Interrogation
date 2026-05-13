@@ -2,15 +2,17 @@
 
 ## Description
 
-* Git Repo: https://github.com/WordPress/WordPress
-* Site: https://wordpress.org
-* Docs: https://wordpress.org/documentation/
+* Git Repo: https://github.com/tryghost/Ghost
+* Site: https://ghost.org/
+* Docs: https://docs.ghost.org/
 
 ## Run the Software
 
 ``` bash
 # Spin up
 docker compose up -d
+
+# Go to http://100.72.162.111:8080/ghost/ to finish setup
 
 ```
 
@@ -29,14 +31,5 @@ eralchemy2 -i $MYSQL_URL -o $ERD_PATH/$PROJECT_NAME.pdf
 eralchemy2 -i $MYSQL_URL -o $ERD_PATH/$PROJECT_NAME.md
 eralchemy2 -i $MYSQL_URL -o $ERD_PATH/$PROJECT_NAME.png
 eralchemy2 -i $MYSQL_URL -o $ERD_PATH/$PROJECT_NAME.jpg
-
-```
-
-
-
-``` bash
-
-
-mysql://mysql:mysql@localhost:3307/mysql
 
 ```
