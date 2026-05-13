@@ -16,4 +16,5 @@ python3 -m venv env
 source env/bin/activate
 pip install eralchemy2
 pip install psycopg2-binary
+pip install mysqlclient
 ```

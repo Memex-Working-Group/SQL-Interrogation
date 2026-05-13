@@ -1,0 +1,194 @@
+Table "wp_commentmeta" {
+  "meta_id" "bigint unsigned" [pk, not null, increment]
+  "comment_id" "bigint unsigned" [not null, default: 0]
+  "meta_key" varchar(255)
+  "meta_value" longtext
+
+  Indexes {
+    comment_id [type: btree, name: "comment_id"]
+    `meta_key(191)` [type: btree, name: "meta_key"]
+  }
+}
+
+Table "wp_comments" {
+  "comment_ID" "bigint unsigned" [pk, not null, increment]
+  "comment_post_ID" "bigint unsigned" [not null, default: 0]
+  "comment_author" tinytext [not null]
+  "comment_author_email" varchar(100) [not null, default: '']
+  "comment_author_url" varchar(200) [not null, default: '']
+  "comment_author_IP" varchar(100) [not null, default: '']
+  "comment_date" datetime [not null, default: '0000-00-00 00:00:00']
+  "comment_date_gmt" datetime [not null, default: '0000-00-00 00:00:00']
+  "comment_content" text [not null]
+  "comment_karma" int [not null, default: 0]
+  "comment_approved" varchar(20) [not null, default: 1]
+  "comment_agent" varchar(255) [not null, default: '']
+  "comment_type" varchar(20) [not null, default: 'comment']
+  "comment_parent" "bigint unsigned" [not null, default: 0]
+  "user_id" "bigint unsigned" [not null, default: 0]
+
+  Indexes {
+    (comment_date_gmt, comment_approved) [type: btree, name: "comment_approved_date_gmt"]
+    `comment_author_email(10)` [type: btree, name: "comment_author_email"]
+    comment_date_gmt [type: btree, name: "comment_date_gmt"]
+    comment_parent [type: btree, name: "comment_parent"]
+    comment_post_ID [type: btree, name: "comment_post_ID"]
+  }
+}
+
+Table "wp_links" {
+  "link_id" "bigint unsigned" [pk, not null, increment]
+  "link_url" varchar(255) [not null, default: '']
+  "link_name" varchar(255) [not null, default: '']
+  "link_image" varchar(255) [not null, default: '']
+  "link_target" varchar(25) [not null, default: '']
+  "link_description" varchar(255) [not null, default: '']
+  "link_visible" varchar(20) [not null, default: 'Y']
+  "link_owner" "bigint unsigned" [not null, default: 1]
+  "link_rating" int [not null, default: 0]
+  "link_updated" datetime [not null, default: '0000-00-00 00:00:00']
+  "link_rel" varchar(255) [not null, default: '']
+  "link_notes" mediumtext [not null]
+  "link_rss" varchar(255) [not null, default: '']
+
+  Indexes {
+    link_visible [type: btree, name: "link_visible"]
+  }
+}
+
+Table "wp_options" {
+  "option_id" "bigint unsigned" [pk, not null, increment]
+  "option_name" varchar(191) [unique, not null, default: '']
+  "option_value" longtext [not null]
+  "autoload" varchar(20) [not null, default: 'yes']
+
+  Indexes {
+    autoload [type: btree, name: "autoload"]
+  }
+}
+
+Table "wp_postmeta" {
+  "meta_id" "bigint unsigned" [pk, not null, increment]
+  "post_id" "bigint unsigned" [not null, default: 0]
+  "meta_key" varchar(255)
+  "meta_value" longtext
+
+  Indexes {
+    `meta_key(191)` [type: btree, name: "meta_key"]
+    post_id [type: btree, name: "post_id"]
+  }
+}
+
+Table "wp_posts" {
+  "ID" "bigint unsigned" [pk, not null, increment]
+  "post_author" "bigint unsigned" [not null, default: 0]
+  "post_date" datetime [not null, default: '0000-00-00 00:00:00']
+  "post_date_gmt" datetime [not null, default: '0000-00-00 00:00:00']
+  "post_content" longtext [not null]
+  "post_title" text [not null]
+  "post_excerpt" text [not null]
+  "post_status" varchar(20) [not null, default: 'publish']
+  "comment_status" varchar(20) [not null, default: 'open']
+  "ping_status" varchar(20) [not null, default: 'open']
+  "post_password" varchar(255) [not null, default: '']
+  "post_name" varchar(200) [not null, default: '']
+  "to_ping" text [not null]
+  "pinged" text [not null]
+  "post_modified" datetime [not null, default: '0000-00-00 00:00:00']
+  "post_modified_gmt" datetime [not null, default: '0000-00-00 00:00:00']
+  "post_content_filtered" longtext [not null]
+  "post_parent" "bigint unsigned" [not null, default: 0]
+  "guid" varchar(255) [not null, default: '']
+  "menu_order" int [not null, default: 0]
+  "post_type" varchar(20) [not null, default: 'post']
+  "post_mime_type" varchar(100) [not null, default: '']
+  "comment_count" bigint [not null, default: 0]
+
+  Indexes {
+    post_author [type: btree, name: "post_author"]
+    `post_name(191)` [type: btree, name: "post_name"]
+    post_parent [type: btree, name: "post_parent"]
+    (post_type, post_status, post_author) [type: btree, name: "type_status_author"]
+    (post_status, post_date, ID, post_type) [type: btree, name: "type_status_date"]
+  }
+}
+
+Table "wp_term_relationships" {
+  "object_id" "bigint unsigned" [not null, default: 0]
+  "term_taxonomy_id" "bigint unsigned" [not null, default: 0]
+  "term_order" int [not null, default: 0]
+
+  Indexes {
+    term_taxonomy_id [type: btree, name: "term_taxonomy_id"]
+    (object_id, term_taxonomy_id) [pk, name: "PRIMARY"]
+  }
+}
+
+Table "wp_term_taxonomy" {
+  "term_taxonomy_id" "bigint unsigned" [pk, not null, increment]
+  "term_id" "bigint unsigned" [not null, default: 0]
+  "taxonomy" varchar(32) [not null, default: '']
+  "description" longtext [not null]
+  "parent" "bigint unsigned" [not null, default: 0]
+  "count" bigint [not null, default: 0]
+
+  Indexes {
+    taxonomy [type: btree, name: "taxonomy"]
+    (term_id, taxonomy) [unique, name: "term_id_taxonomy"]
+  }
+}
+
+Table "wp_termmeta" {
+  "meta_id" "bigint unsigned" [pk, not null, increment]
+  "term_id" "bigint unsigned" [not null, default: 0]
+  "meta_key" varchar(255)
+  "meta_value" longtext
+
+  Indexes {
+    `meta_key(191)` [type: btree, name: "meta_key"]
+    term_id [type: btree, name: "term_id"]
+  }
+}
+
+Table "wp_terms" {
+  "term_id" "bigint unsigned" [pk, not null, increment]
+  "name" varchar(200) [not null, default: '']
+  "slug" varchar(200) [not null, default: '']
+  "term_group" bigint [not null, default: 0]
+
+  Indexes {
+    `name(191)` [type: btree, name: "name"]
+    `slug(191)` [type: btree, name: "slug"]
+  }
+}
+
+Table "wp_usermeta" {
+  "umeta_id" "bigint unsigned" [pk, not null, increment]
+  "user_id" "bigint unsigned" [not null, default: 0]
+  "meta_key" varchar(255)
+  "meta_value" longtext
+
+  Indexes {
+    `meta_key(191)` [type: btree, name: "meta_key"]
+    user_id [type: btree, name: "user_id"]
+  }
+}
+
+Table "wp_users" {
+  "ID" "bigint unsigned" [pk, not null, increment]
+  "user_login" varchar(60) [not null, default: '']
+  "user_pass" varchar(255) [not null, default: '']
+  "user_nicename" varchar(50) [not null, default: '']
+  "user_email" varchar(100) [not null, default: '']
+  "user_url" varchar(100) [not null, default: '']
+  "user_registered" datetime [not null, default: '0000-00-00 00:00:00']
+  "user_activation_key" varchar(255) [not null, default: '']
+  "user_status" int [not null, default: 0]
+  "display_name" varchar(250) [not null, default: '']
+
+  Indexes {
+    user_email [type: btree, name: "user_email"]
+    user_login [type: btree, name: "user_login_key"]
+    user_nicename [type: btree, name: "user_nicename"]
+  }
+}
