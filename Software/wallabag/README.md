@@ -13,8 +13,9 @@
 git clone https://github.com/wallabag/wallabag.git /tmp/wallabag
 cd /tmp/wallabag
 
-# Create a docker-compose.yml for wallabag with mariadb
-cat > "docker-compose.yml" << 'EOF'
+# Create a docker-compose.yml for wallabag with mariadb using official images
+cat > docker-compose.yml << 'EOF'
+version: '3'
 services:
   mariadb:
     image: mariadb:10
@@ -29,39 +30,33 @@ services:
       - "3306:3306"
 
   wallabag:
-    build:
-      context: .
-      dockerfile: ./docker/php/Dockerfile
-      target: default
-    volumes:
-      - .:/var/www/html
-      - assets:/var/www/html/web/assets
-      - data:/var/www/html/data
-      - cache:/var/www/.cache
+    image: wallabag/wallabag:latest
     environment:
       - DATABASE_URL=mysql://wallabag:wallaroot@mariadb:3306/wallabag
+      - SYMFONY_ENV=prod
+      - SYMFONY_DEBUG=0
     ports:
-      - "8000:8000"
+      - "8000:80"
     depends_on:
       - mariadb
 
 volumes:
   db-data:
-  assets:
-  data:
-  cache:
 EOF
 
 # Start the containers
 docker compose up -d
 
-# Wait for mariadb to be ready (we can wait a few seconds and then check)
-sleep 10
+# Wait for mariadb and wallabag to be ready (we can wait a few seconds and then check)
+sleep 15
 
 # Install wallabag (this will create the database schema and an admin user)
 docker compose exec wallabag php bin/console wallabag:install --env=prod --no-interaction --admin-user=admin --admin-password=admin --admin-email=admin@example.com
 
 # Now wallabag is running and the database is set up.
+
+# To access the database
+docker exec -it $(docker ps -qf "name=mariadb") mysql -u root -p
 ```
 
 ## Export the Schema
