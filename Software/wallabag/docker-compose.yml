@@ -1,0 +1,35 @@
+services:
+  mariadb:
+    image: mariadb:10
+    volumes:
+      - db-data:/var/lib/mysql
+    env_file:
+      - ./docker/mariadb/env
+    environment:
+      - MYSQL_USER=wallabag
+      - MYSQL_PASSWORD=wallaroot
+    ports:
+      - "3306:3306"
+
+  wallabag:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+      target: default
+    volumes:
+      - .:/var/www/html
+      - assets:/var/www/html/web/assets
+      - data:/var/www/html/data
+      - cache:/var/www/.cache
+    environment:
+      - DATABASE_URL=mysql://wallabag:wallaroot@mariadb:3306/wallabag
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mariadb
+
+volumes:
+  db-data:
+  assets:
+  data:
+  cache:
