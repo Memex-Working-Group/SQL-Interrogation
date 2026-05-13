@@ -1,3 +1,12 @@
+# Nextcloud SQL Schema Export
+
+## Description
+
+* Git Repo: https://github.com/nextcloud/server
+* Site: https://nextcloud.com
+* Docs: https://docs.nextcloud.com
+
+## Run the Software
 
 ``` bash
 docker compose up -d
@@ -12,8 +21,11 @@ docker exec --user www-data nextcloud-app php occ maintenance:install \
   --database-pass "postgres" \
   --admin-user "admin" \
   --admin-pass "admin"
+```
 
+## Export the Schema
 
+``` bash
 export CURRENT_DIR="$(pwd -P)"
 export ERD_PATH="$CURRENT_DIR/sqlSchema"
 export PROJECT_NAME='Nextcloud'
