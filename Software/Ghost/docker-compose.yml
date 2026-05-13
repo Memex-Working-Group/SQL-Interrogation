@@ -1,0 +1,33 @@
+services:
+  ghost-db:
+    image: mysql:8.0
+    container_name: ghost-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_here
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost_user            # Changed from 'mysql'
+      MYSQL_PASSWORD: secure_password   # Use a stronger password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./container-data/db:/var/lib/mysql
+
+  ghost-app:
+    image: ghost:latest
+    container_name: ghost-app
+    restart: always
+    ports:
+      - "8080:2368"
+    depends_on:
+      - ghost-db
+    environment:
+      # Standardized to uppercase for better compatibility
+      database__client: mysql
+      database__connection__host: ghost-db
+      database__connection__user: ghost_user
+      database__connection__password: secure_password
+      database__connection__database: ghost
+      url: http://localhost:8080
+    volumes:
+      - ./container-data/app:/var/lib/ghost/content
