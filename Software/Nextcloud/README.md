@@ -1,5 +1,18 @@
 
 ``` bash
+docker compose up -d
+
+# Wait for nextcloud to start running
+# Seed the database
+docker exec --user www-data nextcloud-app php occ maintenance:install \
+  --database "pgsql" \
+  --database-host "db" \
+  --database-name "postgres" \
+  --database-user "postgres" \
+  --database-pass "postgres" \
+  --admin-user "admin" \
+  --admin-pass "admin"
+
 
 export CURRENT_DIR="$(pwd -P)"
 export ERD_PATH="$CURRENT_DIR/sqlSchema"
@@ -14,7 +27,6 @@ eralchemy2 -i $POSTGRES_URL_PYTHON -o $ERD_PATH/$PROJECT_NAME.pdf
 eralchemy2 -i $POSTGRES_URL_PYTHON -o $ERD_PATH/$PROJECT_NAME.md
 eralchemy2 -i $POSTGRES_URL_PYTHON -o $ERD_PATH/$PROJECT_NAME.png
 eralchemy2 -i $POSTGRES_URL_PYTHON -o $ERD_PATH/$PROJECT_NAME.jpg
-# brew install postgresql@17
 docker exec -it nextcloud-db pg_dump --schema-only $POSTGRES_URL > $ERD_PATH/$PROJECT_NAME.sql
 
 ```
